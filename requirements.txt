@@ -1,0 +1,11 @@
+sentence-transformers==2.2.2
+langchain
+streamlit
+python-dotenv
+faiss-cpu
+langchain_community
+langchain_experimental
+groq
+langchain_groq
+langchain-huggingface
+-e .
