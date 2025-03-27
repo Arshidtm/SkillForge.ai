@@ -3,14 +3,14 @@ from langchain_core.prompts import ChatPromptTemplate
 
 
 def get_prompt_is_job():
-    prompt = ChatPromptTemplate.from_template(
+    prompt_is_job = ChatPromptTemplate.from_template(
             """Determine if the following text describes a job role. 
             Answer strictly 'Yes' or 'No'.
             
             Text: {text}
             """
         )
-    return prompt
+    return prompt_is_job
 
 def get_system_prompt():
     system_prompt = ("""You are a friendly and knowledgeable AI career mentor.  Your role is to provide insightful and helpful career
