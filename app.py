@@ -55,11 +55,14 @@ with st.sidebar:
             if 'vector_store' not in st.session_state:
                 with st.spinner("Fetching job data..."):
                     st.session_state.fetch_job = fetch_jobs(job_role)
-                    st.session_state.docs = documentation(st.session_state.fetch_job)
-                    embedding = get_embedding_model()
-                    st.session_state.vector_store = get_vector_store(st.session_state.docs, embedding)
-                    st.success("Job data loaded successfully!")
-            
+                    if  not st.session_state.fetch_job:
+                        st.write("No File Found")
+                    else:
+                        st.session_state.docs = documentation(st.session_state.fetch_job)
+                        embedding = get_embedding_model()
+                        st.session_state.vector_store = get_vector_store(st.session_state.docs, embedding)
+                        st.success("Job data loaded successfully!")
+                
             st.write("You're good to go! Ask questions in the chat.")
 
 # Main chat area
