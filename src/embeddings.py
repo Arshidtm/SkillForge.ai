@@ -1,5 +1,6 @@
 import logging
 from typing import List
+import streamlit as st
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -13,6 +14,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+@st.cache_resource(ttl=3600)
 def get_embedding_model() -> HuggingFaceEmbeddings:
     """
     Initializing and returning the embedding model.
@@ -33,7 +35,8 @@ def get_embedding_model() -> HuggingFaceEmbeddings:
         raise RuntimeError("Could not initialize embedding model") from e
 
 
-def get_vector_store(text: List[Document], embeddings: HuggingFaceEmbeddings) -> FAISS:
+@st.cache_resource(ttl=3600)
+def get_vector_store(_text: List[Document], _embeddings: HuggingFaceEmbeddings) -> FAISS:
     """
     Create and return FAISS vector store from documents.
 
@@ -49,7 +52,7 @@ def get_vector_store(text: List[Document], embeddings: HuggingFaceEmbeddings) ->
         RuntimeError: if vector store creation failed
     """
     try:
-        if not text or not isinstance(text, list):
+        if not _text or not isinstance(_text, list):
             raise ValueError("Input documents must be a non-empty list")
 
         logger.info("Creating vector store from documents")
@@ -59,13 +62,13 @@ def get_vector_store(text: List[Document], embeddings: HuggingFaceEmbeddings) ->
         )
 
         logger.info(f"splitting documents into chunks")
-        text_chunks = text_splitter.split_documents(text)
+        text_chunks = text_splitter.split_documents(_text)
         logger.info(f"created {len(text_chunks)} text chunks")
 
         if not text_chunks:
             raise ValueError("No valid chunks created from documents")
 
-        vector_store = FAISS.from_documents(text_chunks, embeddings)
+        vector_store = FAISS.from_documents(text_chunks, _embeddings)
 
         logger.info("Created vectore store Successfully")
         return vector_store
