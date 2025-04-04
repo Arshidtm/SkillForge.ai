@@ -1,0 +1,2 @@
+{"label":"DEGREE","pattern":[{"LOWER":{"in":["bsc","b.tech","mba"]}}]}
+{"label":"SKILL","pattern":[{"LOWER":"python"},{"LOWER":"tensorflow"}]}

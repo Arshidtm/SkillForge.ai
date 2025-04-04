@@ -8,7 +8,7 @@ from langchain_core.prompts import MessagesPlaceholder, ChatPromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
-
+from langchain_core.runnables import RunnableLambda
 
 # Configure logging
 logging.basicConfig(
@@ -55,6 +55,9 @@ def is_job_role(text: str, llm: ChatGroq, prompt: ChatPromptTemplate) -> str:
         raise
 
 
+
+
+
 def get_rag_chain_with_memory(
     llm: ChatGroq, retriever, contextualize_q_system_prompt: str, system_prompt: str
 ):
@@ -92,7 +95,7 @@ def get_rag_chain_with_memory(
 
     logger.debug("creating rag chain")
     rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
-
+    
     return rag_chain
 
 

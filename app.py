@@ -18,11 +18,7 @@ from src.prompt import (
     get_contextualize_q_system_prompt,
     get_prompt_profile_evaluator,
 )
-from src.profile_picture import (
-    load_yolo_model,
-    generate_response,
-    predict_score
-)
+from src.profile_picture import load_yolo_model, generate_response, predict_score
 from uuid import uuid4
 from streamlit_chat import message
 from src.resume_extract import extract_resume, extract_details
@@ -30,29 +26,27 @@ import spacy
 import time
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
-
+from langchain_core.runnables import RunnableLambda
 
 
 # configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
-
 if "current_module" not in st.session_state:
-    st.session_state.current_module = "Module 1"
-    
+    st.session_state.current_module = None
+
 if "module1" not in st.session_state:
     st.session_state.module1 = {
         "uploaded_file": None,
         "score": None,
         "image": None,
-        "feedback": None
+        "feedback": None,
     }
-    
+
 if "module2" not in st.session_state:
     st.session_state.module2 = {
         "chat_history": [],
@@ -76,19 +70,23 @@ if "module2" not in st.session_state:
         # "session_id": None,
         # "store": {}
     }
-    
+
 with st.sidebar:
     st.header("Navigation")
-    
+
     # Module selection buttons
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📸 Module 1", help="Profile Picture Analysis", key="module1_nav_btn"):
+        if st.button(
+            "📸 Module 1", help="Profile Picture Analysis", key="module1_nav_btn"
+        ):
             st.session_state.current_module = "Module 1"
     with col2:
-        if st.button("📊 Module 2", help="Second Module Functionality", key="module2_nav_btn"):
+        if st.button(
+            "📊 Module 2", help="Second Module Functionality", key="module2_nav_btn"
+        ):
             st.session_state.current_module = "Module 2"
-            
+
 # Module 1 Content
 if st.session_state.current_module == "Module 1":
     st.title("👔 Profile Picture Professionalism Rater")
@@ -97,18 +95,22 @@ if st.session_state.current_module == "Module 1":
         model = load_yolo_model()
     except Exception as e:
         logger.error(f"Error loading model {str(e)}")
-    
+
     # Sidebar for upload (only shown in Module 1)
     with st.sidebar:
         st.header("Upload Image")
-        uploaded_file = st.file_uploader("Choose a profile picture...", 
-                                      type=["jpg", "jpeg", "png", "webp"],
-                                      key="module1_uploader")
-        
+        uploaded_file = st.file_uploader(
+            "Choose a profile picture...",
+            type=["jpg", "jpeg", "png", "webp"],
+            key="module1_uploader",
+        )
+
         # Store uploaded file in session state
         if uploaded_file:
             st.session_state.module1["uploaded_file"] = uploaded_file
-            st.session_state.module1["image"] = Image.open(io.BytesIO(uploaded_file.getvalue()))
+            st.session_state.module1["image"] = Image.open(
+                io.BytesIO(uploaded_file.getvalue())
+            )
 
     # Main content area
     col1, col2 = st.columns(2)
@@ -118,34 +120,41 @@ if st.session_state.current_module == "Module 1":
             try:
                 # Only predict if score doesn't exist
                 # if st.session_state.module1["score"] is None:
-                score, image = predict_score(st.session_state.module1["uploaded_file"], model)
+                score, image = predict_score(
+                    st.session_state.module1["uploaded_file"], model
+                )
                 st.session_state.module1["score"] = score
                 st.session_state.module1["feedback"] = generate_response(score, llm)
-                
+
                 # Display results
                 with col1:
-                    st.image(st.session_state.module1["image"], 
-                           caption="Your Profile Picture",
-                           width=300)
+                    st.image(
+                        st.session_state.module1["image"],
+                        caption="Your Profile Picture",
+                        width=300,
+                    )
                     st.subheader("Results")
-                    st.metric("Professional Score", f"{st.session_state.module1['score']}/100")
-                    st.progress(st.session_state.module1["score"]/100)
-                
+                    st.metric(
+                        "Professional Score", f"{st.session_state.module1['score']}/100"
+                    )
+                    st.progress(st.session_state.module1["score"] / 100)
+
                 with col2:
                     st.markdown(st.session_state.module1["feedback"])
-                    
+
             except Exception as e:
                 st.error(f"Error processing image: {str(e)}")
     else:
         # Show placeholder before upload
         with col1:
-            st.image("https://via.placeholder.com/300x300?text=Upload+an+image", 
-                    caption="Preview will appear here",
-                    width=300)
+            st.image(
+                "https://via.placeholder.com/300x300?text=Upload+an+image",
+                caption="Preview will appear here",
+                width=300,
+            )
         with col2:
             st.info("ℹ️ Upload a profile picture to analyze its professionalism")
 elif st.session_state.current_module == "Module 2":
-
 
     # Module 2
     # Initialize session state
@@ -162,41 +171,35 @@ elif st.session_state.current_module == "Module 2":
                 "docs": None,
                 # "vector_store": None,
                 "job_role_validated": False,
-                
                 # Resume Processing
                 "uploaded_file": None,
                 "extracted_resume": None,
                 "extracted_details": None,
                 "resume_processed": False,
                 "resume_analyzed": False,
-                
                 # Chatbot messages
                 "messages": [],
                 "chat_history": [],
-                
                 # performance
                 "last_query_time": 0,
                 "api_calls": 0,
-                
                 # session management
                 "session_id": None,
-                "store": {}
+                "store": {},
             }
             st.session_state.init = True
 
-
     init_session_state()
-
 
     # Initialize LLM and NLP
     try:
         llm = get_llm()
         nlp = spacy.load("resume_ner_model")
+        embedding = get_embedding_model()
         logger.info("Model loaded successfully")
     except Exception as e:
         logger.error("Model Initialization Failed")
         st.error(f"Model Initialization error: {str(e)}")
-
 
     # Custom CSS for better styling
     st.markdown(
@@ -234,7 +237,6 @@ elif st.session_state.current_module == "Module 2":
         unsafe_allow_html=True,
     )
 
-
     # Sidebar for job role input
     with st.sidebar:
         st.title("Job Configuration")
@@ -261,17 +263,24 @@ elif st.session_state.current_module == "Module 2":
                                 st.session_state.module2["docs"] = documentation(
                                     st.session_state.module2["fetch_job"]
                                 )
-                                embedding = get_embedding_model()
-                                st.session_state.module2["vector_store"] = get_vector_store(
-                                    st.session_state.module2["docs"], embedding
+
+                                st.session_state.module2["vector_store"] = (
+                                    get_vector_store(
+                                        st.session_state.module2["docs"], embedding
+                                    )
                                 )
-                                logger.info('Job data loaded')
+                                logger.info("Job data loaded")
                                 st.success("Job data loaded ")
 
         if st.session_state.module2["job_role_validated"]:
             st.write("You're good to go! Ask questions in the chat.")
-            st.session_state.module2["uploaded_file"] = st.file_uploader("Upload your resume",key="module2_file_uploader")
-            if st.session_state.module2["uploaded_file"] and not st.session_state.module2["resume_processed"]:
+            st.session_state.module2["uploaded_file"] = st.file_uploader(
+                "Upload your resume", key="module2_file_uploader"
+            )
+            if (
+                st.session_state.module2["uploaded_file"]
+                and not st.session_state.module2["resume_processed"]
+            ):
                 with st.spinner("Extracting the resume"):
                     try:
                         st.session_state.module2["extracted_resume"] = extract_resume(
@@ -287,10 +296,8 @@ elif st.session_state.current_module == "Module 2":
                         logger.error("Error processing the resume")
                         st.error(f"Error processing the resume: {str(e)}")
 
-
     # Main chat area
     st.title("SkillForge Career Assistant")
-
 
     # Display chat messages
     for msg in st.session_state.module2["messages"]:
@@ -323,10 +330,21 @@ elif st.session_state.current_module == "Module 2":
             )
             logger.info("RAG chain initialized")
 
+            def context_filter(input_dict):
+                if not input_dict.get("context"):
+                    return {
+                        "answer": "I can only answer questions about technical career skills based on my knowledge base."
+                    }
+                return input_dict
+
+            filtered_rag_chain = rag_chain | RunnableLambda(context_filter)
+
             # Session management
             if "session_id" not in st.session_state.module2:
                 st.session_state.module2["session_id"] = str(uuid4())
-                logger.info(f"New session created: {st.session_state.module2['session_id']}")
+                logger.info(
+                    f"New session created: {st.session_state.module2['session_id']}"
+                )
 
             session_id = st.session_state.module2["session_id"]
 
@@ -336,10 +354,10 @@ elif st.session_state.current_module == "Module 2":
             def get_session_history(session_id: str) -> BaseChatMessageHistory:
                 """
                 Create chat message history for session
-                
+
                 Args:
                     session_id (str): Unique identifier for the conversational session.
-                
+
                 Returns:
                     BaseChatMessageHistory: The chat history of session
                 """
@@ -347,7 +365,7 @@ elif st.session_state.current_module == "Module 2":
                     st.session_state.module2["store"][session_id] = ChatMessageHistory()
                 return st.session_state.module2["store"][session_id]
 
-            conversational_rag_chain = get_conversational_rag_chain(rag_chain)
+            conversational_rag_chain = get_conversational_rag_chain(filtered_rag_chain)
 
             # Handle chat input
             user_input = st.chat_input(
@@ -375,7 +393,7 @@ elif st.session_state.current_module == "Module 2":
                         )
                         st.session_state.module2["resume_analyzed"] = True
                         logger.info("resume analyzed")
-                        
+
                     except Exception as e:
                         logger.error("Error analyzing resume")
                         st.error(f"Error analyzing resume: {str(e)}")
@@ -397,8 +415,10 @@ elif st.session_state.current_module == "Module 2":
                 st.session_state.module2["api_calls"] += 1
 
                 # Add user message to history
-                st.session_state.module2["messages"].append({"role": "user", "content": user_input})
-                
+                st.session_state.module2["messages"].append(
+                    {"role": "user", "content": user_input}
+                )
+
                 # Get and display response
                 with st.spinner("Researching..."):
                     try:

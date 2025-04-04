@@ -1,6 +1,6 @@
 from ultralytics import YOLO
-import streamlit as st 
-import os 
+import streamlit as st
+import os
 from PIL import Image
 import io
 import streamlit as st
@@ -10,18 +10,18 @@ from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain.prompts import ChatPromptTemplate
 import logging
-
+import os
 
 # configure logging
 logging.basicConfig(
-    level=logging.INFO, 
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 load_dotenv()
 
+# st.write(os.getcwd())
 
 
 # Load your model (example for YOLOv8)
@@ -33,25 +33,25 @@ def load_yolo_model() -> YOLO:
     Returns:
         YOLO: Trained YOLO model
     """
-    model_path = "..\\runs\\classify\\train\\weights\\best.pt"
-    
+    model_path = "models\\runs\\classify\\train\\weights\\best.pt"
+
     try:
         model = YOLO(model_path)
         logger.info("Successfully uploaded the YOLO model")
         return model
     except FileNotFoundError:
         logger.error(f"Model file not found at {model_path}")
-    except Exception as e: 
+    except Exception as e:
         logger.error(f"Error loading YOLO model: {str(e)}")
         raise
 
 
-@st.cache_resource
-def load_llm():
-    llm = ChatGroq(
-        model="llama-3.3-70b-versatile",
-    )
-    return llm
+# @st.cache_resource
+# def load_llm():
+#     llm = ChatGroq(
+#         model="llama-3.3-70b-versatile",
+#     )
+#     return llm
 
 prompt = ChatPromptTemplate.from_template(
     """
@@ -70,8 +70,10 @@ prompt = ChatPromptTemplate.from_template(
     **Improve**: [5 actions]
     **Benchmark**: [comparison to industry standard]"""
 )
-llm = load_llm()
-def generate_response(score,llm):
+
+
+# llm = load_llm()
+def generate_response(score, llm):
     """
     Generate a response using the provided LLM based on the given score.
 
@@ -82,9 +84,9 @@ def generate_response(score,llm):
     Returns:
         str: The generated response content
     """
-    try:        
+    try:
         formatted_prompt = prompt.format(score=score)
-        
+
         response = llm.invoke(formatted_prompt)
         return response.content
     except Exception as e:
@@ -92,34 +94,33 @@ def generate_response(score,llm):
         raise
 
 
+# model = load_yolo_model()
 
-model = load_yolo_model()
 
-def predict_score(uploaded_file,model):
+def predict_score(uploaded_file, model):
     """
     Predict the professional score of an uploaded image using YOLO model
-    
+
     Args:
         uploaded_file: The uploaded image file
         model: The trained YOLO model
-    
+
     Returns:
         tuple: (predicted professional score as percentage, processed image object)
-    """   
+    """
     try:
         image = Image.open(io.BytesIO(uploaded_file.getvalue()))
-        
+
         # Run prediction
         results = model(image)
         probs = results[0].probs
-        professional_prob = probs.data[1].item()  
-        
-        return round(professional_prob * 100, 2), image  
+        professional_prob = probs.data[1].item()
+
+        return round(professional_prob * 100, 2), image
     except Exception as e:
         logger.error(f"Error while predicting score: {str(e)}")
         raise
-    
-    
+
 
 # import streamlit as st
 # from PIL import Image
@@ -128,7 +129,7 @@ def predict_score(uploaded_file,model):
 # # Initialize all session states
 # if "current_module" not in st.session_state:
 #     st.session_state.current_module = "Module 1"
-    
+
 # if "module1" not in st.session_state:
 #     st.session_state.module1 = {
 #         "uploaded_file": None,
@@ -136,7 +137,7 @@ def predict_score(uploaded_file,model):
 #         "image": None,
 #         "feedback": None
 #     }
-    
+
 # if "module2" not in st.session_state:
 #     st.session_state.module2 = {
 #         "chat_history": []
@@ -145,7 +146,7 @@ def predict_score(uploaded_file,model):
 # Sidebar navigation
 # with st.sidebar:
 #     st.header("Navigation")
-    
+
 #     # Module selection buttons
 #     col1, col2 = st.columns(2)
 #     with col1:
@@ -158,14 +159,14 @@ def predict_score(uploaded_file,model):
 # # Module 1 Content
 # if st.session_state.current_module == "Module 1":
 #     st.title("👔 Profile Picture Professionalism Rater")
-    
+
 #     # Sidebar for upload (only shown in Module 1)
 #     with st.sidebar:
 #         st.header("Upload Image")
-#         uploaded_file = st.file_uploader("Choose a profile picture...", 
+#         uploaded_file = st.file_uploader("Choose a profile picture...",
 #                                       type=["jpg", "jpeg", "png", "webp"],
 #                                       key="module1_uploader")
-        
+
 #         # Store uploaded file in session state
 #         if uploaded_file:
 #             st.session_state.module1["uploaded_file"] = uploaded_file
@@ -182,25 +183,25 @@ def predict_score(uploaded_file,model):
 #                     score, image = predict_score(st.session_state.module1["uploaded_file"], model)
 #                     st.session_state.module1["score"] = score
 #                     st.session_state.module1["feedback"] = generate_response(score, load_llm())
-                
+
 #                 # Display results
 #                 with col1:
-#                     st.image(st.session_state.module1["image"], 
+#                     st.image(st.session_state.module1["image"],
 #                            caption="Your Profile Picture",
 #                            width=300)
 #                     st.subheader("Results")
 #                     st.metric("Professional Score", f"{st.session_state.module1['score']}/100")
 #                     st.progress(st.session_state.module1["score"]/100)
-                
+
 #                 with col2:
 #                     st.markdown(st.session_state.module1["feedback"])
-                    
+
 #             except Exception as e:
 #                 st.error(f"Error processing image: {str(e)}")
 #     else:
 #         # Show placeholder before upload
 #         with col1:
-#             st.image("https://via.placeholder.com/300x300?text=Upload+an+image", 
+#             st.image("https://via.placeholder.com/300x300?text=Upload+an+image",
 #                     caption="Preview will appear here",
 #                     width=300)
 #         with col2:
@@ -209,23 +210,23 @@ def predict_score(uploaded_file,model):
 # # Module 2 Content
 # elif st.session_state.current_module == "Module 2":
 #     st.title("Chatbot")
-    
+
 #     # Initialize chat history if empty
 #     if not st.session_state.module2["chat_history"]:
 #         st.session_state.module2["chat_history"] = [{"role": "assistant", "content": "How can I help you?"}]
-    
+
 #     # Display chat messages (all on left side)
 #     for msg in st.session_state.module2["chat_history"]:
 #         st.chat_message(msg["role"]).write(msg["content"])
-    
+
 #     # Chat input at bottom
 #     if prompt := st.chat_input("Type your message..."):
 #         # Add user message to chat history
 #         st.session_state.module2["chat_history"].append({"role": "user", "content": prompt})
-        
+
 #         # Display user message immediately
 #         st.chat_message("user").write(prompt)
-        
+
 #         # Generate and display assistant response
 #         with st.spinner("Thinking..."):
 #             response = f"Echo: {prompt}"  # Replace with your chatbot logic
