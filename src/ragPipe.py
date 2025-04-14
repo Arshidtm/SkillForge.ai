@@ -49,6 +49,7 @@ def is_job_role(text: str, llm: ChatGroq, prompt: ChatPromptTemplate) -> str:
 
     try:
         response = llm.invoke(formatted_prompt)
+        logger.info(f"job role {response.content}")
         return response.content
     except Exception as e:
         logger.error("Error determining the job role")

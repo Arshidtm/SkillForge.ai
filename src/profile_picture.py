@@ -1,16 +1,15 @@
 from ultralytics import YOLO
 import streamlit as st
-import os
+
 from PIL import Image
 import io
-import streamlit as st
-from PIL import Image
-import io
+
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain.prompts import ChatPromptTemplate
 import logging
 import os
+import pymupdf
 
 # configure logging
 logging.basicConfig(
@@ -44,14 +43,32 @@ def load_yolo_model() -> YOLO:
     except Exception as e:
         logger.error(f"Error loading YOLO model: {str(e)}")
         raise
+    
+@st.cache_resource
+def load_yolov8_model():
+    """
+    load and return the  YOLO model
 
+    Returns:
+        YOLO:  YOLOv8n model
+    """
+    model_path = "models\\yolov8n.pt"
+    try:
+        model = YOLO(model_path)
+        logger.info("Successfully uploaded the YOLO model")
+        return model
+    except FileNotFoundError:
+        logger.error(f"Model file not found at {model_path}")
+    except Exception as e:
+        logger.error(f"Error loading YOLO model: {str(e)}")
+        raise
 
-# @st.cache_resource
-# def load_llm():
-#     llm = ChatGroq(
-#         model="llama-3.3-70b-versatile",
-#     )
-#     return llm
+@st.cache_resource
+def load_llm():
+    llm = ChatGroq(
+        model="llama-3.3-70b-versatile",
+    )
+    return llm
 
 prompt = ChatPromptTemplate.from_template(
     """
@@ -120,6 +137,95 @@ def predict_score(uploaded_file, model):
     except Exception as e:
         logger.error(f"Error while predicting score: {str(e)}")
         raise
+    
+def predict_score_pil(image, model):
+    """
+    Predict the professional score of an image using YOLO model
+
+    Args:
+        image: PIL.Image object or file-like object
+        model: The trained YOLO model
+
+    Returns:
+        tuple: (predicted professional score as percentage, processed image object)
+    """
+    try:
+        # If it's a file-like object (Streamlit upload), convert to PIL Image
+        if hasattr(image, 'getvalue'):
+            image = Image.open(io.BytesIO(image.getvalue()))
+        
+        # Run prediction (image is now definitely a PIL Image)
+        results = model(image)
+        probs = results[0].probs
+        professional_prob = probs.data[1].item()
+
+        return round(professional_prob * 100, 2), image
+    except Exception as e:
+        logger.error(f"Error while predicting score: {str(e)}")
+        raise
+    
+def profile_picture_detection(resume_path, model, confidence_threshold=0.7):
+    """
+    Detects profile picture in a PDF resume with proper page validation.
+    
+    Args:
+        resume_path: Path to PDF or Streamlit file uploader object
+        model: YOLO model for detection
+        confidence_threshold: Minimum confidence score (0-1)
+    
+    Returns:
+        PIL.Image or None: Cropped profile picture or None
+    """
+    try:
+        # logger.debug("step1")
+        # Handle both file paths and Streamlit uploads
+        if hasattr(resume_path, 'read'):  # Streamlit file-like object
+            doc = pymupdf.open(stream=resume_path.read(), filetype="pdf")
+            # logger.debug("step2")
+        else:  # Regular file path
+            doc = pymupdf.open(resume_path)
+            # logger.debug("step3")
+        
+        # Validate page exists
+        if doc.page_count == 0:
+            raise ValueError("PDF has no pages ")
+        
+        # Check first 3 pages max (where profile pics usually appear)
+        for page_num in range(min(3, doc.page_count)):
+            try:
+                images = doc.get_page_images(page_num)
+                for img in images:
+                    try:
+                        extracted = doc.extract_image(img[0])
+                        pil_image = Image.open(io.BytesIO(extracted['image']))
+                        
+                        # Skip small images
+                        if min(pil_image.size) < 100:
+                            continue
+                            
+                        # Detect humans
+                        results = model(pil_image)
+                        for box in results[0].boxes:
+                            if box.cls == 0 and box.conf > confidence_threshold:
+                                x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+                                return pil_image.crop((x1, y1, x2, y2))
+                                
+                    except Exception as img_error:
+                        print(f"Skipped image on page {page_num}: {img_error}")
+                        continue
+                        
+            except Exception as page_error:
+                print(f"Error processing page {page_num}: {page_error}")
+                continue
+                
+    except Exception as doc_error:
+        print(f"PDF processing failed: {doc_error}")
+        
+    finally:
+        if 'doc' in locals():
+            doc.close()
+            
+    return None
 
 
 # import streamlit as st
@@ -140,10 +246,31 @@ def predict_score(uploaded_file, model):
 
 # if "module2" not in st.session_state:
 #     st.session_state.module2 = {
-#         "chat_history": []
+#         "chat_history": [],
+#         # Job processing
+#         # "fetch_job": None,
+#         # "docs": None,
+#         # "vector_store": None,
+#         "job_role_validated": False,
+#         # Resume processing
+#         "uploaded_file": None,
+#         # "extracted_resume": None,
+#         # "extracted_details": None,
+#         "extract_profile_picture": None,
+#         "professionalism_score": None,
+#         "resume_processed": False,
+#         "resume_analyzed": False,
+#         # Chatbot messages
+#         "messages": [],
+#         # Performance
+#         "last_query_time": 0,
+#         "api_calls": 0,
+#         # Session management
+#         # "session_id": None,
+#         # "store": {}
 #     }
 
-# Sidebar navigation
+# # Sidebar navigation
 # with st.sidebar:
 #     st.header("Navigation")
 
@@ -210,25 +337,48 @@ def predict_score(uploaded_file, model):
 # # Module 2 Content
 # elif st.session_state.current_module == "Module 2":
 #     st.title("Chatbot")
+#     st.session_state.module2["uploaded_file"] = st.file_uploader(
+#                 "Upload your resume", key="module2_file_uploader"
+#             )
+#     with st.spinner("Extracting the resume"):
+#                     try:                        
+                        
+#                         st.session_state.module2["extract_profile_picture"] = profile_picture_detection(
+#                             st.session_state.module2["uploaded_file"], YOLO("..//models//yolov8n.pt")
+#                         )
+#                         if st.session_state.module2["extract_profile_picture"]:
+#                             score, image = predict_score_pil(
+#                                 st.session_state.module2['extract_profile_picture'], YOLO("..//models\\runs\\classify\\train\\weights\\best.pt")
+#                             )
+#                             st.session_state.module2["professionalism_score"] = score
+#                             logger.info("profile picture success")
+#                             st.write(st.session_state.module2["professionalism_score"])
+                            
+#                         st.session_state.module2["resume_processed"] = True
+#                         # st.success("Resume processed")
+#                         logger.info("resume processed success")
+#                     except Exception as e:
+#                         logger.error("Error processing the resume")
+#                         st.error(f"Error processing the resume: {str(e)}")
 
-#     # Initialize chat history if empty
-#     if not st.session_state.module2["chat_history"]:
-#         st.session_state.module2["chat_history"] = [{"role": "assistant", "content": "How can I help you?"}]
+    # Initialize chat history if empty
+    # if not st.session_state.module2["chat_history"]:
+    #     st.session_state.module2["chat_history"] = [{"role": "assistant", "content": "How can I help you?"}]
 
-#     # Display chat messages (all on left side)
-#     for msg in st.session_state.module2["chat_history"]:
-#         st.chat_message(msg["role"]).write(msg["content"])
+    # # Display chat messages (all on left side)
+    # for msg in st.session_state.module2["chat_history"]:
+    #     st.chat_message(msg["role"]).write(msg["content"])
 
-#     # Chat input at bottom
-#     if prompt := st.chat_input("Type your message..."):
-#         # Add user message to chat history
-#         st.session_state.module2["chat_history"].append({"role": "user", "content": prompt})
+    # # Chat input at bottom
+    # if prompt := st.chat_input("Type your message..."):
+    #     # Add user message to chat history
+    #     st.session_state.module2["chat_history"].append({"role": "user", "content": prompt})
 
-#         # Display user message immediately
-#         st.chat_message("user").write(prompt)
+    #     # Display user message immediately
+    #     st.chat_message("user").write(prompt)
 
-#         # Generate and display assistant response
-#         with st.spinner("Thinking..."):
-#             response = f"Echo: {prompt}"  # Replace with your chatbot logic
-#             st.session_state.module2["chat_history"].append({"role": "assistant", "content": response})
-#             st.chat_message("assistant").write(response)
+    #     # Generate and display assistant response
+    #     with st.spinner("Thinking..."):
+    #         response = f"Echo: {prompt}"  # Replace with your chatbot logic
+    #         st.session_state.module2["chat_history"].append({"role": "assistant", "content": response})
+    #         st.chat_message("assistant").write(response)

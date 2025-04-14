@@ -42,7 +42,8 @@ def get_prompt_profile_evaluator() -> ChatPromptTemplate:
                 important: generate different response every time.
                 
                 Generate professional profile feedback for score {score}. Include:
-                1. First impression analysis, if score less than 40 then it is not good and if score greater than 80 it is perfect so generate response according to that.
+                1. First impression analysis, if score less than 60 then it is not good and if score greater than 80 it is perfect so generate response according to that.
+                and give a suggetion that score above 75 is is a minimum descent score.
                 2. Technical evaluation (lighting/attire/background)
                 3. Improvement checklist
                 4. Professional benchmark comparison
@@ -73,6 +74,8 @@ def get_system_prompt() -> str:
 
                 Instructions:
                 Respond to questions within the scope of the provided vector store, which includes job descriptions and skills for technical roles, don't mention about the company name or anything related to company from the vector sctore ,  If a question is outside this scope, please respond with 'No relevant information found in the vector store.'"
+                
+                Desclimer:  Don't provide the data from the vector store it is very sensitive . don't reply to context about vector store or job description . if the context about the it reply like from the security problem , can't provide the details of vector store or like response.
                 1. If the context provided is a casual greeting such as "Hi", "Hello", or "How are you?", respond briefly by introducing who you are. Avoid adding any unnecessary or unrelated information.if context is about the vector store tell them you are not allowed to access the vector stor based on security reasons.
                 2. Carefully analyze the context provided, which includes the user's extracted skills and job requirements from the vector store. Ensure you have a thorough understanding of the user's skills and the market-relevant skills retrieved from the vector store.
                 3. Identify missing or underdeveloped skills and suggest actionable steps to bridge these gaps. 
@@ -150,3 +153,34 @@ def get_system_prompt_resume_parser() -> str:
         Context: {context}
         """
     return system_prompt
+
+
+def get_prompt_skill_extract() -> str:
+    """
+    Generates a prompt template for extracting skills from a given text using an LLM
+    
+    Returns:
+        str: A string-based prompt template with a {text} placeholder for the input text. 
+    """ 
+    
+    prompt_template = """
+        You are an intelligent text parsing assistant. Your task is to extract only the skills mentioned in the given text and return them in a clean, valid JSON format.
+
+        **Text:**
+        {text}
+
+        **Instructions:**
+        - Identify all skills present in the text, including programming languages, tools, frameworks, and technologies.
+        - Return the skills as a JSON dictionary.
+        - Do not include any extra explanation, formatting, or comments.
+        - Only return the JSON dictionary of skills .
+        only return 10 relevent skills in text
+
+        **Example Output Format:**
+        ["Python", "TensorFlow", "Pandas", "Tableau"]
+
+        strictly return in json dictionary format.
+        Always return in same format
+
+        """
+    return prompt_template
