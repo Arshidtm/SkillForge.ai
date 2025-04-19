@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def load_dataset():
     """Loads the combined_courses.csv file and returns a DataFrame."""
     try:
-        df = pd.read_csv("data\\combined_courses.csv")
+        df = pd.read_csv("models\\combined_courses.csv")
         logging.info("Dataset loaded successfully.")
         return df
     except Exception as e:
@@ -51,7 +51,8 @@ def recommend_courses(vector_store, nlp, resume_skills, embeddings, skill_embedd
     """
     try:
         # Convert resume skills to set for O(1) lookups
-        resume_skills_set = set(skill.lower() for skill in resume_skills)        
+        if resume_skills is not None:
+            resume_skills_set = set(skill.lower() for skill in resume_skills)        
 
         # Extract skills from vector store
         skill_gaps = set()
@@ -120,7 +121,9 @@ def recommend_courses_llm(jd_skills,resume_skills, embeddings, skill_embeddings,
     """
     try:
         # Convert resume skills to set for O(1) lookups
-        resume_skills_set = set(skill.lower() for skill in resume_skills)        
+        resume_skills_set = set()
+        if resume_skills:
+            resume_skills_set = set(skill.lower() for skill in resume_skills)        
 
         # Extract skills from vector store
         jd_skills_set = set(skill.lower() for skill in jd_skills)

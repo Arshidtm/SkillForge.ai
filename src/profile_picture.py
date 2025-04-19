@@ -1,9 +1,7 @@
 from ultralytics import YOLO
 import streamlit as st
-
 from PIL import Image
 import io
-
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain.prompts import ChatPromptTemplate
@@ -20,10 +18,7 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-# st.write(os.getcwd())
 
-
-# Load your model (example for YOLOv8)
 @st.cache_resource
 def load_yolo_model() -> YOLO:
     """
@@ -43,6 +38,7 @@ def load_yolo_model() -> YOLO:
     except Exception as e:
         logger.error(f"Error loading YOLO model: {str(e)}")
         raise
+    
     
 @st.cache_resource
 def load_yolov8_model():
@@ -89,7 +85,6 @@ prompt = ChatPromptTemplate.from_template(
 )
 
 
-# llm = load_llm()
 def generate_response(score, llm):
     """
     Generate a response using the provided LLM based on the given score.
@@ -109,9 +104,6 @@ def generate_response(score, llm):
     except Exception as e:
         logger.error("Error generating response")
         raise
-
-
-# model = load_yolo_model()
 
 
 def predict_score(uploaded_file, model):
@@ -226,159 +218,3 @@ def profile_picture_detection(resume_path, model, confidence_threshold=0.7):
             doc.close()
             
     return None
-
-
-# import streamlit as st
-# from PIL import Image
-# import io
-
-# # Initialize all session states
-# if "current_module" not in st.session_state:
-#     st.session_state.current_module = "Module 1"
-
-# if "module1" not in st.session_state:
-#     st.session_state.module1 = {
-#         "uploaded_file": None,
-#         "score": None,
-#         "image": None,
-#         "feedback": None
-#     }
-
-# if "module2" not in st.session_state:
-#     st.session_state.module2 = {
-#         "chat_history": [],
-#         # Job processing
-#         # "fetch_job": None,
-#         # "docs": None,
-#         # "vector_store": None,
-#         "job_role_validated": False,
-#         # Resume processing
-#         "uploaded_file": None,
-#         # "extracted_resume": None,
-#         # "extracted_details": None,
-#         "extract_profile_picture": None,
-#         "professionalism_score": None,
-#         "resume_processed": False,
-#         "resume_analyzed": False,
-#         # Chatbot messages
-#         "messages": [],
-#         # Performance
-#         "last_query_time": 0,
-#         "api_calls": 0,
-#         # Session management
-#         # "session_id": None,
-#         # "store": {}
-#     }
-
-# # Sidebar navigation
-# with st.sidebar:
-#     st.header("Navigation")
-
-#     # Module selection buttons
-#     col1, col2 = st.columns(2)
-#     with col1:
-#         if st.button("📸 Module 1", help="Profile Picture Analysis"):
-#             st.session_state.current_module = "Module 1"
-#     with col2:
-#         if st.button("📊 Module 2", help="Second Module Functionality"):
-#             st.session_state.current_module = "Module 2"
-
-# # Module 1 Content
-# if st.session_state.current_module == "Module 1":
-#     st.title("👔 Profile Picture Professionalism Rater")
-
-#     # Sidebar for upload (only shown in Module 1)
-#     with st.sidebar:
-#         st.header("Upload Image")
-#         uploaded_file = st.file_uploader("Choose a profile picture...",
-#                                       type=["jpg", "jpeg", "png", "webp"],
-#                                       key="module1_uploader")
-
-#         # Store uploaded file in session state
-#         if uploaded_file:
-#             st.session_state.module1["uploaded_file"] = uploaded_file
-#             st.session_state.module1["image"] = Image.open(io.BytesIO(uploaded_file.getvalue()))
-
-#     # Main content area
-#     col1, col2 = st.columns(2)
-
-#     if st.session_state.module1["uploaded_file"]:
-#         with st.spinner("Analyzing professionalism..."):
-#             try:
-#                 # Only predict if score doesn't exist
-#                 if st.session_state.module1["score"] is None:
-#                     score, image = predict_score(st.session_state.module1["uploaded_file"], model)
-#                     st.session_state.module1["score"] = score
-#                     st.session_state.module1["feedback"] = generate_response(score, load_llm())
-
-#                 # Display results
-#                 with col1:
-#                     st.image(st.session_state.module1["image"],
-#                            caption="Your Profile Picture",
-#                            width=300)
-#                     st.subheader("Results")
-#                     st.metric("Professional Score", f"{st.session_state.module1['score']}/100")
-#                     st.progress(st.session_state.module1["score"]/100)
-
-#                 with col2:
-#                     st.markdown(st.session_state.module1["feedback"])
-
-#             except Exception as e:
-#                 st.error(f"Error processing image: {str(e)}")
-#     else:
-#         # Show placeholder before upload
-#         with col1:
-#             st.image("https://via.placeholder.com/300x300?text=Upload+an+image",
-#                     caption="Preview will appear here",
-#                     width=300)
-#         with col2:
-#             st.info("ℹ️ Upload a profile picture to analyze its professionalism")
-
-# # Module 2 Content
-# elif st.session_state.current_module == "Module 2":
-#     st.title("Chatbot")
-#     st.session_state.module2["uploaded_file"] = st.file_uploader(
-#                 "Upload your resume", key="module2_file_uploader"
-#             )
-#     with st.spinner("Extracting the resume"):
-#                     try:                        
-                        
-#                         st.session_state.module2["extract_profile_picture"] = profile_picture_detection(
-#                             st.session_state.module2["uploaded_file"], YOLO("..//models//yolov8n.pt")
-#                         )
-#                         if st.session_state.module2["extract_profile_picture"]:
-#                             score, image = predict_score_pil(
-#                                 st.session_state.module2['extract_profile_picture'], YOLO("..//models\\runs\\classify\\train\\weights\\best.pt")
-#                             )
-#                             st.session_state.module2["professionalism_score"] = score
-#                             logger.info("profile picture success")
-#                             st.write(st.session_state.module2["professionalism_score"])
-                            
-#                         st.session_state.module2["resume_processed"] = True
-#                         # st.success("Resume processed")
-#                         logger.info("resume processed success")
-#                     except Exception as e:
-#                         logger.error("Error processing the resume")
-#                         st.error(f"Error processing the resume: {str(e)}")
-
-    # Initialize chat history if empty
-    # if not st.session_state.module2["chat_history"]:
-    #     st.session_state.module2["chat_history"] = [{"role": "assistant", "content": "How can I help you?"}]
-
-    # # Display chat messages (all on left side)
-    # for msg in st.session_state.module2["chat_history"]:
-    #     st.chat_message(msg["role"]).write(msg["content"])
-
-    # # Chat input at bottom
-    # if prompt := st.chat_input("Type your message..."):
-    #     # Add user message to chat history
-    #     st.session_state.module2["chat_history"].append({"role": "user", "content": prompt})
-
-    #     # Display user message immediately
-    #     st.chat_message("user").write(prompt)
-
-    #     # Generate and display assistant response
-    #     with st.spinner("Thinking..."):
-    #         response = f"Echo: {prompt}"  # Replace with your chatbot logic
-    #         st.session_state.module2["chat_history"].append({"role": "assistant", "content": response})
-    #         st.chat_message("assistant").write(response)

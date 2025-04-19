@@ -46,7 +46,7 @@ def extract_resume(file_path: str) -> Optional[str]:
 
         if not full_text.strip():
             logger.warning("No text was extracted from the resume")
-            return None
+            return "Please provide a valid PDF file"
 
         return full_text
     except FileNotFoundError:
