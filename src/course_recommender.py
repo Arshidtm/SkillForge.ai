@@ -10,10 +10,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def load_dataset():
+def load_dataset(file_path):
     """Loads the combined_courses.csv file and returns a DataFrame."""
     try:
-        df = pd.read_csv("models\\combined_courses.csv")
+        df = pd.read_csv(file_path)
         logging.info("Dataset loaded successfully.")
         return df
     except Exception as e:
@@ -21,10 +21,10 @@ def load_dataset():
         return None
     
 
-def load_skill_embeddings():
+def load_skill_embeddings(file_path):
     """Loads precomputed skill embeddings from a pickle file."""
     try:
-        with open("models\\skill_embeddings.pkl", "rb") as f:
+        with open(file_path, "rb") as f:
             skill_embeddings = pickle.load(f)
             logging.info("Skill embeddings loaded successfully.")
             return skill_embeddings

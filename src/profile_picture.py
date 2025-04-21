@@ -20,14 +20,13 @@ load_dotenv()
 
 
 @st.cache_resource
-def load_yolo_model() -> YOLO:
+def load_yolo_model(model_path) -> YOLO:
     """
     load and return the trained YOLO model
 
     Returns:
         YOLO: Trained YOLO model
-    """
-    model_path = "models\\runs\\classify\\train\\weights\\best.pt"
+    """  
 
     try:
         model = YOLO(model_path)
@@ -41,14 +40,14 @@ def load_yolo_model() -> YOLO:
     
     
 @st.cache_resource
-def load_yolov8_model():
+def load_yolov8_model(model_path):
     """
     load and return the  YOLO model
 
     Returns:
         YOLO:  YOLOv8n model
     """
-    model_path = "models\\yolov8n.pt"
+    
     try:
         model = YOLO(model_path)
         logger.info("Successfully uploaded the YOLO model")
@@ -124,7 +123,7 @@ def predict_score(uploaded_file, model):
         results = model(image)
         probs = results[0].probs
         professional_prob = probs.data[1].item()
-
+        logger.info("profile picture score predicted")
         return round(professional_prob * 100, 2), image
     except Exception as e:
         logger.error(f"Error while predicting score: {str(e)}")

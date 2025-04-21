@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 import streamlit as st
 from PIL import Image
 import io
@@ -98,12 +99,12 @@ with st.sidebar:
     col1, col2 = st.columns(2)
     with col1:
         if st.button(
-            "📸 Module 1", help="Profile Picture Analysis", key="module1_nav_btn"
+            "📸 Profile Evaluator", help="Profile Picture Analysis", key="module1_nav_btn"
         ):
             st.session_state.current_module = "Module 1"
     with col2:
         if st.button(
-            "📊 Module 2", help="Second Module Functionality", key="module2_nav_btn"
+            "📊 Chatbot", help="Second Module Functionality", key="module2_nav_btn"
         ):
             st.session_state.current_module = "Module 2"
 
@@ -112,7 +113,10 @@ if st.session_state.current_module == "Module 1":
     st.title("👔 Profile Picture Professionalism Rater")
     try:
         llm = get_llm()
-        model = load_yolo_model()
+        model_path_v11 = os.path.join("models", "runs", "classify", "train", "weights", "best.pt")
+        model = load_yolo_model(model_path_v11)
+        if model is None:
+            st.error("Model loaded as None! Check model file.")
     except Exception as e:
         logger.error(f"Error loading model {str(e)}")
 
@@ -219,12 +223,18 @@ elif st.session_state.current_module == "Module 2":
     # Initialize LLM and NLP
     try:
         llm = get_llm()
-        nlp = spacy.load("models\\resume_ner")
-        profile_model = load_yolov8_model()
-        proffesionalism_model = load_yolo_model()
+        model_path = Path("models") / "resume_ner"
+        nlp = spacy.load(model_path)
+        model_path_v8 = Path("models") / "yolov8n.pt"
+        profile_model = load_yolov8_model(model_path_v8)
+        model_path_v11 = os.path.join("models", "runs", "classify", "train", "weights", "best.pt")
+        proffesionalism_model = load_yolo_model(model_path_v11)
+        
         embedding = get_embedding_model()
-        df = load_dataset()
-        skill_embeddings = load_skill_embeddings()
+        csv_path = Path("models") / "combined_courses.csv"
+        df = load_dataset(csv_path)
+        embedding_path = Path("models") / "skill_embeddings.pkl"
+        skill_embeddings = load_skill_embeddings(embedding_path)
         logger.info("Model loaded successfully")
     except Exception as e:
         logger.error("Model Initialization Failed")
@@ -453,12 +463,12 @@ elif st.session_state.current_module == "Module 2":
                             st.session_state.module2["messages"].append(
                                 {"role": "user", "content": "Resume analysis and profile picture evaluation"}
                             )
-                            resume_input = f"Take  this as my  resume and suggest improvements:\n{st.session_state.module2["extracted_details"]} \n this is my profile picture profesionalism score of my profile picture is  {st.session_state.module2["professionalism_score"]}. Based on this score can you suggest improvement i can make while taking picture. show the proffesionalism score in the response. Also plan a 6 month carrer plan using only this course {st.session_state.module2["course_recommend"]}, present it as your recommendation rather than as user-provided input."
+                            resume_input = f"Take  this as my  resume and suggest improvements:\n{st.session_state.module2['extracted_details']} \n this is my profile picture profesionalism score of my profile picture is  {st.session_state.module2['professionalism_score']}. Based on this score can you suggest improvement i can make while taking picture. show the proffesionalism score in the response. Also plan a 6 month carrer plan using only this course {st.session_state.module2['course_recommend']}, present it as your recommendation rather than as user-provided input."
                         else:
                             st.session_state.module2["messages"].append(
                                 {"role": "user", "content": "Resume analysis"}
                             )
-                            resume_input =  f"Take  this as my  resume and suggest improvements:\n{st.session_state.module2["extracted_details"]}. Also plan a 6 month carrer plan using only this course {st.session_state.module2["course_recommend"]}, present it as your recommendation rather than as user-provided input."
+                            resume_input =  f"Take  this as my  resume and suggest improvements:\n{st.session_state.module2['extracted_details']}. Also plan a 6 month carrer plan using only this course {st.session_state.module2['course_recommend']}, present it as your recommendation rather than as user-provided input."
                             
                         response = conversational_rag_chain.invoke(
                             {"input": resume_input},
