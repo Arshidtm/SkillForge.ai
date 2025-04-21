@@ -40,16 +40,23 @@ from ultralytics import YOLO
 import os
 from dotenv import load_dotenv
 
-os.environ["STREAMLIT_SERVER_ENABLE_FILE_WATCHER"] = "false"
-load_dotenv()
-
-api_key = os.getenv("RAPIDAPI_KEY")
-
 # configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+os.environ["STREAMLIT_SERVER_ENABLE_FILE_WATCHER"] = "false"
+load_dotenv()
+
+api_key = os.getenv("RAPIDAPI_KEY")
+
+st.set_page_config(
+    page_title="SkillForge.ai",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 
 if "current_module" not in st.session_state:
