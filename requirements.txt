@@ -1,29 +1,27 @@
-# Core Python packages (built-in, no need to install)
-# logging, pathlib, io, uuid, time - these are Python standard library
-
-# Main packages with compatible versions
+# Core packages
 streamlit==1.33.0
 spacy==3.7.4
-langchain-core==0.1.33
-langchain-community==0.0.29
-ultralytics==8.2.4
 python-dotenv==1.0.1
-scikit-learn==1.4.2
 numpy==1.26.4
 pandas==2.2.1
-langchain==0.1.13
-langchain-huggingface==0.0.4
-langchain-groq==0.1.2
+Pillow==10.2.0
+requests==2.31.0
+regex==2024.4.16
 
-# Utility packages
+# LangChain ecosystem (updated versions)
+langchain-core==0.1.33
+langchain-community==0.0.29
+langchain==0.1.13
+langchain-huggingface==0.1.2  # Updated from 0.0.4
+
+# Document processing
 PyMuPDF==1.24.1
 PyPDF2==3.0.1
-Pillow==10.2.0
-requests==2.31.0  # for http functionality
-regex==2024.4.16  # advanced re implementation
-random2==1.0.1    # for random functionality
 
-# Optional (comment out if not needed)
-# pickle - Python standard library
-# json - Python standard library
-# re - Python standard library
+# ML/DL packages
+scikit-learn==1.4.2
+ultralytics==8.2.4
+torch==2.2.1  # Explicitly added for ultralytics compatibility
+
+# Groq integration
+langchain-groq==0.1.2
