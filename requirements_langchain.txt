@@ -1,0 +1,5 @@
+langchain-core==0.1.33
+langchain-community==0.0.29
+langchain==0.1.13
+langchain-huggingface==0.1.2
+langchain-groq==0.1.2
