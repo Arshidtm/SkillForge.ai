@@ -1,25 +1,30 @@
-logging
-pathlib
-streamlit
-io
-uuid
-spacy
-time
-langchain_core
-langchain_community
-ultralytics
-dotenv
-langchain
-scikit-learn
-numpy
-pandas
-pickle
-langchain_huggingface
-json
-http
-re 
-random
-PIL 
-langchain_groq
-pymupdf
-PyPDF2
+# Core Python packages
+logging==0.4.9.6
+pathlib==1.0.1
+streamlit==1.33.0
+io==0.3.1
+uuid==1.30
+time==1.2.2
+
+# NLP and ML packages
+spacy==3.7.4
+langchain-core==0.1.33
+langchain-community==0.0.29
+ultralytics==8.2.4
+scikit-learn==1.4.2
+numpy==1.26.4
+pandas==2.2.1
+langchain==0.1.13
+langchain-huggingface==0.0.4
+langchain-groq==0.1.2
+
+# Utility packages
+python-dotenv==1.0.1
+pickle5==0.0.12
+PyMuPDF==1.24.1
+PyPDF2==3.0.1
+Pillow==10.2.0
+pymupdf==1.24.1
+requests==2.31.0  # http functionality
+regex==2024.4.16  # re replacement
+random2==1.0.1
