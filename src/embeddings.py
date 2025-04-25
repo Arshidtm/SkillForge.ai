@@ -27,7 +27,7 @@ def get_embedding_model() -> HuggingFaceEmbeddings:
     """
     try:
         logger.info("Initializing the HuggingFace embedding model")
-        embedding_model = HuggingFaceEmbeddings()
+        embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
         logger.info("Embeddings model initialized successfully")
         return embedding_model
     except Exception as e:
